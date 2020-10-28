@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.ValueSource
 class SyncFileNumberReaderTest  {
     @ParameterizedTest
     @ValueSource(strings = ["./data/numbers_0_99_ok.txt", "./data/numbers_0_99_nok.txt"])
-    fun `demo SyncFileNumberReaderTest with numbers_0_99_ok`(filePath: String) {
+    fun `demo SyncFileNumberReaderTest`(filePath: String) {
         val intReader = SyncFileIntReader(filePath)
         println("\n\n$filePath:")
         repeat(110) {
