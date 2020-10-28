@@ -18,6 +18,7 @@ dependencies {
     implementation("io.projectreactor:reactor-test")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:$JUNIT_VERSION")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$JUNIT_VERSION")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$JUNIT_VERSION")
     testImplementation("org.assertj:assertj-core:3.18.0")
 }
