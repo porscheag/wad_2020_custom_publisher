@@ -1,5 +1,6 @@
-package de.porsche.wad2020.fileintreader
+package de.porsche.wad2020.fileintreader.sync
 
+import de.porsche.wad2020.fileintreader.FileIntReaderException
 import java.io.File
 
 class SyncFileIntReader(val filePath: String) {
@@ -21,7 +22,9 @@ class SyncFileIntReader(val filePath: String) {
     }
 
     fun close() {
-        if(!isClosed) inputStream.close()
-        isClosed = true
+        if(!isClosed) {
+            inputStream.close()
+            isClosed = true
+        }
     }
 }

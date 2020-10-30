@@ -1,5 +1,6 @@
-package de.porsche.wad2020.fileintreader
+package de.porsche.wad2020.fileintreader.sync
 
+import de.porsche.wad2020.fileintreader.FileIntReaderException
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 

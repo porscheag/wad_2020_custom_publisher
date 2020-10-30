@@ -17,6 +17,8 @@ dependencies {
     implementation("io.projectreactor:reactor-core")
     implementation("io.projectreactor:reactor-test")
 
+    implementation("io.arrow-kt:arrow-core:0.11.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:$JUNIT_VERSION")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$JUNIT_VERSION")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$JUNIT_VERSION")
