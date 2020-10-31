@@ -7,6 +7,4 @@ internal val executorService = Executors.newFixedThreadPool(10)
 
 interface AsyncFileIntReader {
     fun readNumber(callback: (Either<Throwable, Int?>) -> Unit)
-    fun close()
-    val isClosed: Boolean
 }

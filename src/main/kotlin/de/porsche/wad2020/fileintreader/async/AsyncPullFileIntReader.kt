@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
 import de.porsche.wad2020.fileintreader.FileIntReaderException
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.CompletionHandler
@@ -64,13 +65,13 @@ class AsyncPullFileIntReader(val filePath: String) : AsyncFileIntReader {
         }
     }
 
-    override fun close() {
+    fun close() {
         if(!_isClosed) {
-            channel.close()
+            try { channel.close() } catch(_: IOException) {}
             _isClosed = true
         }
     }
 
     private var _isClosed = false
-    override val isClosed get() = _isClosed
+    val isClosed get() = _isClosed
 }

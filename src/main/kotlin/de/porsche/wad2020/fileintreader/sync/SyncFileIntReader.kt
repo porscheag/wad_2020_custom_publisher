@@ -2,6 +2,7 @@ package de.porsche.wad2020.fileintreader.sync
 
 import de.porsche.wad2020.fileintreader.FileIntReaderException
 import java.io.File
+import java.io.IOException
 
 class SyncFileIntReader(val filePath: String) {
     private val inputStream = File(filePath).inputStream()
@@ -23,7 +24,7 @@ class SyncFileIntReader(val filePath: String) {
 
     fun close() {
         if(!isClosed) {
-            inputStream.close()
+            try { inputStream.close() } catch(_: IOException) { }
             isClosed = true
         }
     }
