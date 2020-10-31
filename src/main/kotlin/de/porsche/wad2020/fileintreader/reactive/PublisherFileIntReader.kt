@@ -1,12 +1,11 @@
 package de.porsche.wad2020.fileintreader.reactive
 
-
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.util.concurrent.atomic.AtomicBoolean
 
-class PublisherFileIntReader() : Publisher<Int> {
+class PublisherFileIntReader : Publisher<Int> {
     private val fakeData = (0..99).asSequence()
 
     override fun subscribe(subscriber: Subscriber<in Int>) {
@@ -14,45 +13,29 @@ class PublisherFileIntReader() : Publisher<Int> {
     }
 }
 
-class SubscriberFileIntReader : Subscriber<Int> {
-    override fun onComplete() {
-        println("onComplete()")
-    }
-
-    override fun onError(error: Throwable) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onNext(data: Int) {
-        println("onNext($data)")
-    }
-
-    override fun onSubscribe(subscription: Subscription) {
-        TODO("Not yet implemented")
-    }
-}
-
 class SubscriptionFileIntReader(
     private val subscriber: Subscriber<in Int>,
     private val iterator: Iterator<Int>
 ) : Subscription {
-    private var isCancelled: AtomicBoolean = AtomicBoolean(false)
+    private var isTerminated: AtomicBoolean = AtomicBoolean(false)
 
     override fun cancel() {
-        isCancelled.getAndSet(true)
+        isTerminated.getAndSet(true)
     }
 
     override fun request(n: Long) {
-        if(n <= 0) {
+        if(n <= 0 && !isTerminated.get()) {
             subscriber.onError(IllegalArgumentException("n must be greater 0, but is $n"))
         } else {
             tailrec fun recFn(counter: Int) {
-                if(counter < n && iterator.hasNext() && !isCancelled.get()) {
+                if(counter < n && iterator.hasNext() && !isTerminated.get()) {
                     subscriber.onNext(iterator.next())
                     recFn(counter + 1)
                 }
-
-                if(!iterator.hasNext() && !isCancelled.get()) subscriber.onComplete()
+                if(!iterator.hasNext() && !isTerminated.get()) {
+                    subscriber.onComplete()
+                    isTerminated.getAndSet(true)
+                }
             }
             recFn(0)
         }
