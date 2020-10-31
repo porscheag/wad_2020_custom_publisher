@@ -34,6 +34,7 @@ class AsyncPullFileIntReaderTest {
                 }
             }
         }
+        println("This should be visible before the first number is printed!")
 
         lock.await()
     }
