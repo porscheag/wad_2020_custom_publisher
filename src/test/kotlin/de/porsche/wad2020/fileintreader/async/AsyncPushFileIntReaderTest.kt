@@ -1,13 +1,12 @@
 package de.porsche.wad2020.fileintreader.async
 
 import arrow.core.Either
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.testng.annotations.DataProvider
+import org.testng.annotations.Test
 import java.util.concurrent.CountDownLatch
 
 class AsyncPushFileIntReaderTest {
-    @ParameterizedTest
-    @ValueSource(strings = ["./data/numbers_0_99_ok.txt", "./data/numbers_0_99_nok.txt"])
+    @Test(dataProvider = "filePath")
     fun `demo AsyncPushFileIntReader`(filePath: String) {
         val lock = CountDownLatch(1)
         val intReader = AsyncPushFileIntReader(filePath)
@@ -26,4 +25,10 @@ class AsyncPushFileIntReaderTest {
 
         lock.await()
     }
+
+    @DataProvider(name = "filePath")
+    fun getFilePaths(): Array<Array<String>> = arrayOf(
+        arrayOf("./data/numbers_0_99_ok.txt"),
+        arrayOf("./data/numbers_0_99_nok.txt")
+    )
 }

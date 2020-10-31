@@ -1,6 +1,6 @@
 package de.porsche.wad2020
 
-import org.junit.jupiter.api.Test
+import org.testng.annotations.Test
 import reactor.test.StepVerifier
 
 class HelloWorldTest {

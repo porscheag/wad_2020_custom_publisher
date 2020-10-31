@@ -1,12 +1,11 @@
 package de.porsche.wad2020.fileintreader.sync
 
 import de.porsche.wad2020.fileintreader.FileIntReaderException
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.ValueSource
+import org.testng.annotations.DataProvider
+import org.testng.annotations.Test
 
 class SyncFileNumberReaderTest  {
-    @ParameterizedTest
-    @ValueSource(strings = ["./data/numbers_0_99_ok.txt", "./data/numbers_0_99_nok.txt"])
+    @Test(dataProvider = "filePath")
     fun `demo SyncFileNumberReaderTest`(filePath: String) {
         val intReader = SyncFileIntReader(filePath)
         println("\n\n$filePath:")
@@ -18,4 +17,10 @@ class SyncFileNumberReaderTest  {
             }
         }
     }
+
+    @DataProvider(name = "filePath")
+    fun getFilePaths(): Array<Array<String>> = arrayOf(
+        arrayOf("./data/numbers_0_99_ok.txt"),
+        arrayOf("./data/numbers_0_99_nok.txt")
+    )
 }
