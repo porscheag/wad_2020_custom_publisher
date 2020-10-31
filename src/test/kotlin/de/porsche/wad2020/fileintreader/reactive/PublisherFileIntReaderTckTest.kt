@@ -9,10 +9,10 @@ import org.testng.annotations.Test
 @Test
 class PublisherFileIntReaderTckTest : PublisherVerification<Int>(TestEnvironment()) {
     override fun createFailedPublisher(): Publisher<Int> {
-        return RangePublisher(0, 99)
+        return RangePublisher(0, 99) // TODO: return PublisherFileIntReader
     }
 
     override fun createPublisher(elements: Long): Publisher<Int> {
-        return Publisher<Int> { s -> s.onError(RuntimeException("Error!!!")) }
+        return PublisherFileIntReader()
     }
 }
