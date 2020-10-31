@@ -25,19 +25,19 @@ class AsyncPushFileIntReader(val filePath: String) : AsyncFileIntReader {
     }
 
     private inner class FileCompletionHandler(private val callback: (Either<Throwable, Int?>) -> Unit) : CompletionHandler<Int, StringBuilder> {
-        override fun completed(bytesRead: Int?, acc: StringBuilder?) {
-            if(bytesRead ?: 0 > 0) for(pos in 0 until (bytesRead ?: 0)) acc?.append(buffer[pos].toChar())
+        override fun completed(bytesRead: Int, acc: StringBuilder) {
+            if(bytesRead > 0) for(pos in 0 until bytesRead) acc.append(buffer[pos].toChar())
             buffer.clear()
-            position += if(bytesRead ?: 0 > 0) bytesRead?.toLong() ?: 0L else 0L
+            position += if(bytesRead > 0) bytesRead.toLong() else 0L
             if(bytesRead == BUFFER_SIZE) {
-                channel.read(buffer, position, acc ?: StringBuilder(), this)
+                channel.read(buffer, position, acc, this)
             } else {
                 channel.close()
-                parseInts(StringBuilder(), acc ?: StringBuilder(), emptyList()).forEach(callback)
+                parseInts(StringBuilder(), acc, emptyList()).forEach(callback)
             }
         }
 
-        override fun failed(error: Throwable?, acc: StringBuilder?) {
+        override fun failed(error: Throwable, acc: StringBuilder) {
             callback(Left(FileIntReaderException("""Cannot read Int from "$filePath": $error""")))
             try { channel.close() } catch (_: IOException) { }
         }
@@ -56,12 +56,16 @@ class AsyncPushFileIntReader(val filePath: String) : AsyncFileIntReader {
         }
         source.isEmpty() || source.first().isWhitespace() -> {
             if(source.isNotEmpty()) source.deleteCharAt(0)
-            try {
-                val i = acc.toString().toInt()
-                parseInts(acc.clear(), source, destination + Right(i))
-            } catch (error: Throwable) {
-                parseInts(acc.clear(), source, destination + Left(FileIntReaderException("""Cannot read Int from "$filePath": $error""")))
-            }
+
+            parseInts(
+                acc.clear(),
+                source,
+                destination + try {
+                    Right(acc.toString().toInt())
+                } catch (error: Throwable) {
+                    Left(FileIntReaderException("""Cannot read Int from "$filePath": $error"""))
+                }
+            )
         }
         source.first().isDigit() -> {
             parseInts(acc.append(source.first()), source.deleteCharAt(0), destination)

@@ -22,8 +22,8 @@ class AsyncPullFileIntReader(val filePath: String) : AsyncFileIntReader {
         } else {
             val buffer = ByteBuffer.allocate(1)
             channel.read(buffer, position, buffer, object : CompletionHandler<Int, ByteBuffer> {
-                override fun completed(bytesRead: Int?, buffer: ByteBuffer?) {
-                    val c = if (bytesRead == 1) buffer?.get(0)?.toChar() else null
+                override fun completed(bytesRead: Int, buffer: ByteBuffer) {
+                    val c = if (bytesRead == 1) buffer.get(0).toChar() else null
                     when {
                         c?.isDigit() == true -> {
                             ++position
@@ -57,7 +57,7 @@ class AsyncPullFileIntReader(val filePath: String) : AsyncFileIntReader {
                     }
                 }
 
-                override fun failed(error: Throwable?, buffer: ByteBuffer?) {
+                override fun failed(error: Throwable, buffer: ByteBuffer) {
                     close()
                     callback(Left(FileIntReaderException("""Cannot read Int from "$filePath": $error""")))
                 }
