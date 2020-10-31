@@ -46,11 +46,13 @@ class SubscriptionFileIntReader(
         if(n <= 0) {
             subscriber.onError(IllegalArgumentException("n must be greater 0, but is $n"))
         } else {
-            tailrec fun recFn(counter: Int): Unit {
+            tailrec fun recFn(counter: Int) {
                 if(counter < n && iterator.hasNext() && !isCancelled.get()) {
                     subscriber.onNext(iterator.next())
                     recFn(counter + 1)
                 }
+
+                if(!iterator.hasNext() && !isCancelled.get()) subscriber.onComplete()
             }
             recFn(0)
         }
