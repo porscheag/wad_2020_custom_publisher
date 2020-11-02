@@ -1,0 +1,27 @@
+@startuml
+
+interface Publisher<R> {
+  subscribe(s: Subscriber<? super R>): void
+}
+
+interface Subscriber<T> {
+  onSubscribe(s: Subscription): void
+  onNext(t: T): void
+  onError(t: Throwable): void
+  onComplete(): void
+}
+
+interface Subscription {
+  request(n: long): void
+  cancel(): void
+}
+
+interface Processor<R, T>
+
+Publisher <|-right- Processor
+Subscriber <|-right- Processor
+Publisher ..> Subscriber
+Subscriber ..> Subscription
+
+scale 3
+@enduml
