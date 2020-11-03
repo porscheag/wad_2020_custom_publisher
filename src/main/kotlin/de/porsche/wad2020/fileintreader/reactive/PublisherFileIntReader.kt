@@ -5,8 +5,8 @@ import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.util.concurrent.atomic.AtomicBoolean
 
-class PublisherFileIntReader : Publisher<Int> {
-    private val fakeData = (0..99).asSequence()
+class PublisherFileIntReader(elements: Int = 99) : Publisher<Int> {
+    private val fakeData = (0 until elements).asSequence()
 
     override fun subscribe(subscriber: Subscriber<in Int>) {
         subscriber.onSubscribe(SubscriptionFileIntReader(subscriber, fakeData.iterator()))
