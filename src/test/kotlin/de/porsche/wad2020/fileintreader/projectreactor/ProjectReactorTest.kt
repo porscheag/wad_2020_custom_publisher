@@ -5,6 +5,7 @@ import org.testng.annotations.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import reactor.util.function.Tuple2
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import kotlin.random.Random
@@ -131,5 +132,73 @@ class ProjectReactorTest {
 
 
         lock.await()
+    }
+
+    @Test(expectedExceptions = [NullPointerException::class])
+    fun `null values are invalid`() {
+        StepVerifier.create(Mono.just<Int>(null))
+            .expectNext(null)
+            .verifyComplete()
+    }
+
+    private fun requestServiceA() = Mono.just(123).delayElement(Duration.ofMillis(500))
+    private fun requestServiceB() = Mono.just("ABC").delayElement(Duration.ofMillis(300))
+
+    @Test
+    fun `zip is executed in parallel`() {
+        val zipped = Mono.zip(requestServiceA(), requestServiceB())
+        StepVerifier.create(zipped)
+            .assertNext {
+                assertThat(it.t1).isEqualTo(123)
+                assertThat(it.t2).isEqualTo("ABC")
+            }
+            .expectComplete()
+            .verifyThenAssertThat()
+            .tookLessThan(Duration.ofMillis(800))
+    }
+
+    @Test
+    fun `zip with empty publisher is empty`() {
+        val zipped = Mono.zip(requestServiceA(), Mono.empty<String>())
+        StepVerifier.create(zipped)
+            .expectComplete()
+            .verifyThenAssertThat()
+            .tookMoreThan(Duration.ofMillis(500))
+    }
+
+    @Test
+    fun `use mergeWith with empty publishers instead of zip`() {
+        val zipped = requestServiceA().cast(Any::class.java).mergeWith(requestServiceB()).mergeWith((Mono.empty<String>()))
+            .collectList()
+
+
+        StepVerifier.create(zipped)
+            .assertNext {
+                assertThat(it.size).isEqualTo(2)
+                assertThat(it.first()).isIn(123, "ABC")
+                assertThat(it.last()).isIn(123, "ABC")
+                assertThat(it.first() != it.last()).isTrue()
+            }
+            .expectComplete()
+            .verifyThenAssertThat()
+            .tookLessThan(Duration.ofMillis(800))
+    }
+
+    @Test
+    fun `use concatWith with empty publishers instead of zip`() {
+        val zipped = requestServiceA().cast(Any::class.java).concatWith(requestServiceB()).concatWith((Mono.empty<String>()))
+            .collectList()
+
+
+        StepVerifier.create(zipped)
+            .assertNext {
+                assertThat(it.size).isEqualTo(2)
+                assertThat(it.first()).isIn(123, "ABC")
+                assertThat(it.last()).isIn(123, "ABC")
+                assertThat(it.first() != it.last()).isTrue()
+            }
+            .expectComplete()
+            .verifyThenAssertThat()
+            .tookMoreThan(Duration.ofMillis(800))
     }
 }
