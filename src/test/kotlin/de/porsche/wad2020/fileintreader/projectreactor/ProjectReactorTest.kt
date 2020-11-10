@@ -7,6 +7,7 @@ import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
+import java.util.stream.Collectors
 import kotlin.random.Random
 
 class ProjectReactorTest {
@@ -209,12 +210,12 @@ class ProjectReactorTest {
             .tookMoreThan(Duration.ofMillis(800))
     }
 
-    @Test
-    fun `side-effects in switchIfEmpty`() {
-        fun processBody() = Mono.just(123.456)
-        fun requestService(d: Double) = Mono.empty<Double>()
-        fun storeInDB(d: Double) = Mono.just(Unit)
+    private fun processBody() = Mono.just(123.456)
+    private fun requestService(d: Double) = Mono.empty<Double>()
+    private fun storeInDB(d: Double) = Mono.just(d)
 
+    @Test
+    fun `side-effects in switchIfEmpty for empty publisher`() {
         var globalCounter = 0
         fun fnWithSideEffect(): Double {
             ++globalCounter
@@ -228,10 +229,72 @@ class ProjectReactorTest {
 
         StepVerifier.create(publisher)
             .assertNext {
-                assertThat(it).isEqualTo(Unit)
+                assertThat(it).isEqualTo(0.0)
                 assertThat(globalCounter).isEqualTo(1)
             }
             .verifyComplete()
+    }
 
+    @Test
+    fun `side-effects in switchIfEmpty for non-empty publisher`() {
+        var globalCounter = 0
+        fun fnWithSideEffect(): Double {
+            ++globalCounter
+            return 0.0
+        }
+
+        val publisher = processBody()
+            .flatMap(::requestService).then(Mono.just(99.9))
+            .switchIfEmpty(Mono.just(fnWithSideEffect()))
+            .flatMap(::storeInDB)
+
+        StepVerifier.create(publisher)
+            .assertNext {
+                assertThat(it).isEqualTo(99.9)
+                assertThat(globalCounter).isEqualTo(1)
+            }
+            .verifyComplete()
+    }
+
+    @Test
+    fun `avoid side-effects in switchIfEmpty for empty publisher`() {
+        var globalCounter = 0
+        fun fnWithSideEffect(): Double {
+            ++globalCounter
+            return 0.0
+        }
+
+        val publisher = processBody()
+            .flatMap(::requestService)
+            .switchIfEmpty(Mono.defer { Mono.just(fnWithSideEffect()) })
+            .flatMap(::storeInDB)
+
+        StepVerifier.create(publisher)
+            .assertNext {
+                assertThat(it).isEqualTo(0.0)
+                assertThat(globalCounter).isEqualTo(1)
+            }
+            .verifyComplete()
+    }
+
+    @Test
+    fun `avoid side-effects in switchIfEmpty for non-empty publisher`() {
+        var globalCounter = 0
+        fun fnWithSideEffect(): Double {
+            ++globalCounter
+            return 0.0
+        }
+
+        val publisher = processBody()
+            .flatMap(::requestService).then(Mono.just(99.9))
+            .switchIfEmpty(Mono.defer { Mono.just(fnWithSideEffect()) } )
+            .flatMap(::storeInDB)
+
+        StepVerifier.create(publisher)
+            .assertNext {
+                assertThat(it).isEqualTo(99.9)
+                assertThat(globalCounter).isEqualTo(0)
+            }
+            .verifyComplete()
     }
 }
