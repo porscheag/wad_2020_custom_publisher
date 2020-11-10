@@ -211,8 +211,8 @@ class ProjectReactorTest {
     }
 
     private fun processBody() = Mono.just(123.456)
-    private fun requestService(d: Double) = Mono.empty<Double>()
-    private fun storeInDB(d: Double) = Mono.just(d)
+    private fun <T> requestService(d: T) = Mono.empty<T>()
+    private fun <T> storeInDB(d: T) = Mono.just(d)
 
     @Test
     fun `side-effects in switchIfEmpty for empty publisher`() {
