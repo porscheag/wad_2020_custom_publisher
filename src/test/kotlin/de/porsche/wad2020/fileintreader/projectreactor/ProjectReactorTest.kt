@@ -5,7 +5,6 @@ import org.testng.annotations.Test
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import reactor.util.function.Tuple2
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import kotlin.random.Random
@@ -143,9 +142,17 @@ class ProjectReactorTest {
 
     private fun requestServiceA() = Mono.just(123).delayElement(Duration.ofMillis(500))
     private fun requestServiceB() = Mono.just("ABC").delayElement(Duration.ofMillis(300))
+    private fun requestServiceC() = Mono.empty<Double>()
 
     @Test
     fun `zip is executed in parallel`() {
+        fun <T> Mono<T>.storeInDB() = Mono.empty<T>()
+
+        Mono.zip(
+            requestServiceA().defaultIfEmpty(-1),
+            requestServiceB().defaultIfEmpty("")
+        ).storeInDB()
+
         val zipped = Mono.zip(requestServiceA(), requestServiceB())
         StepVerifier.create(zipped)
             .assertNext {
@@ -168,9 +175,8 @@ class ProjectReactorTest {
 
     @Test
     fun `use mergeWith with empty publishers instead of zip`() {
-        val zipped = requestServiceA().cast(Any::class.java).mergeWith(requestServiceB()).mergeWith((Mono.empty<String>()))
+        val zipped = requestServiceA().cast(Any::class.java).mergeWith(requestServiceB()).mergeWith(requestServiceC())
             .collectList()
-
 
         StepVerifier.create(zipped)
             .assertNext {
@@ -186,9 +192,10 @@ class ProjectReactorTest {
 
     @Test
     fun `use concatWith with empty publishers instead of zip`() {
-        val zipped = requestServiceA().cast(Any::class.java).concatWith(requestServiceB()).concatWith((Mono.empty<String>()))
+        val zipped = requestServiceA().cast(Any::class.java)
+            .concatWith(requestServiceB())
+            .concatWith((Mono.empty<String>()))
             .collectList()
-
 
         StepVerifier.create(zipped)
             .assertNext {
@@ -200,5 +207,31 @@ class ProjectReactorTest {
             .expectComplete()
             .verifyThenAssertThat()
             .tookMoreThan(Duration.ofMillis(800))
+    }
+
+    @Test
+    fun `side-effects in switchIfEmpty`() {
+        fun processBody() = Mono.just(123.456)
+        fun requestService(d: Double) = Mono.empty<Double>()
+        fun storeInDB(d: Double) = Mono.just(Unit)
+
+        var globalCounter = 0
+        fun fnWithSideEffect(): Double {
+            ++globalCounter
+            return 0.0
+        }
+
+        val publisher = processBody()
+            .flatMap(::requestService)
+            .switchIfEmpty(Mono.just(fnWithSideEffect()))
+            .flatMap(::storeInDB)
+
+        StepVerifier.create(publisher)
+            .assertNext {
+                assertThat(it).isEqualTo(Unit)
+                assertThat(globalCounter).isEqualTo(1)
+            }
+            .verifyComplete()
+
     }
 }
